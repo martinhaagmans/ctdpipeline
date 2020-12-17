@@ -7,7 +7,7 @@ def readme():
         return f.read()
 
 
-setup(name='CTDPIPE',
+setup(name='CTD',
       version='1.0',
       description='Pipeline for CTD data-analysis',
       long_description=readme(),
@@ -16,6 +16,7 @@ setup(name='CTDPIPE',
       author_email='mahaagmans@gmail.com',
       url='https://www.github.com/zaag/ctdpipeline',
       license='MIT',
+      packages=['ctdpipeline'],
       scripts=['CTD'],
       install_requires=['ngsscriptlibrary>=1.0', 
                         'pycnv>=1.0',
