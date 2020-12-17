@@ -112,9 +112,9 @@ def get_other_agenes(todo, db):
     c = conn.cursor()
     for sample in todo.keys():
         todo[sample]['other_panels'] = dict()
-        panel = todo[sample]['panel']
+        panel, versie = todo[sample]['panel'].split('typeAv')
         sql = """SELECT panel FROM genesis 
-        WHERE (capture='CTD' AND panel!='OVR' AND panel!={})
+        WHERE (capture='CTD' AND panel!='OVR' AND panel!="{}")
         """.format(panel)
         c.execute(sql)
         other_panels = [val for tup in c.fetchall() for val in tup]
