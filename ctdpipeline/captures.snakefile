@@ -85,8 +85,7 @@ def get_a_and_c_genes(todo, db):
     conn = sqlite3.connect(db)
     c = conn.cursor()
     for sample in todo.keys():
-        panel = todo[sample]['panel'].split('v')
-        panel, version = panel
+        panel, versie = todo[sample]['panel'].split('typeAv')
         
         sql = """SELECT genen FROM panels
         WHERE (panel="{}" AND versie={})
