@@ -89,11 +89,6 @@ if __name__ == '__main__':
     else:
         SAMPLESHEET = os.path.join(BASEMOUNT, 'Runs', basespace_serie, 'Files', 'SampleSheet.csv')
 
-        parsed_samplesheet = parse_samplesheet_for_pipeline(SAMPLESHEET, TARGETDB)
-        captures = get_captures(parsed_samplesheet)
-        for capture in captures:
-            run_command('CNV -c {} -s {} --delete'.format(capture, serie))
-
     for _ in glob.iglob('{}/*'.format(SERIEDIR)):
         if _.endswith('Data-analyse'):
             OUTPUTDIR = _
