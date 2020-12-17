@@ -135,11 +135,18 @@ def get_other_agenes(todo, db):
     conn.close()
     return todo
 
+def correct_sanger_target(todo):
+    for sample in todo.keys():
+        todo[sample]['annot'] = todo[sample]['pakkettarget'].replace('.bed', '.annotated')
+        todo[sample]['sanger'] = todo[sample]['pakkettarget']
+    return todo
 
 # Get todo list for samples
 input_dict = parse_samplesheet_for_pipeline(SAMPLESHEET, TARGETDB, ['Amplicon', 'Amplicons'])
 input_dict = get_file_locations(input_dict, TARGETREPO)
+input_dict = get_a_and_c_genes(input_dict, TARGETDB)
 input_dict = get_other_agenes(input_dict, TARGETDB)
+input_dict = correct_sanger_target(input_dict)
 
 captures = get_captures(input_dict)
 pakketten = get_pakketten(input_dict)
