@@ -321,7 +321,7 @@ rule samplereport:
                     header.append('Paraaf NGS-connaisseur')
                     header_printed = False
                     for line in f:
-                        target, z-score, gene, *_ = line.split()
+                        target, z-score, gene, _* = line.split()
                         if gene in report_genes:
                             if not header_printed:
                                 row4, col4 = write_list(header, ws4, formatheader=headerformat,
