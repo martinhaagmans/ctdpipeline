@@ -61,7 +61,7 @@ if __name__ == '__main__':
 
     BASEDIR = os.path.join('/', 'data', 'dnadiag', 'reads')
     ARCHIEF = os.path.join('/', 'mnt', 'kg_nextgen_archief', 'IlluminaRawData')
-    SCRIPTHOME = os.path.dirname(os.path.realpath(__file__))
+    SCRIPTHOME = os.path.join('/', 'data', 'dnadiag', 'ctdpipeline')
     CONFIG = os.path.join(SCRIPTHOME, 'ctdpipeline', 'config.yaml')
     CONFIG_JSON = os.path.join(SCRIPTHOME, 'ctdpipeline', 'config.json')
     READS = os.path.join(BASEDIR, 'MS{}'.format(serie))
