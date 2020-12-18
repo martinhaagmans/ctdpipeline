@@ -214,19 +214,21 @@ rule samplereport:
 
         else:
             sangers_for_panel = False
+            sangers_for_other_panels = False
             a_genes = input_dict[sample]['agenen']
             for line in sangers:
                 gene, chrom, start, end, *_ = line
 
                 for other_panel in input_dict[sample]['other_panels'].keys():
                     if gene in input_dict[sample]['other_panels'][other_panel]:
+                        sangers_for_other_panels = True
                         start = int(start)
                         end = int(end)
-                        out = [gene, chrom, start, end, panel] 
+                        out = [gene, chrom, start, end, other_panel]
                         for st in standaard_merged:
                             st_chrom, st_start, st_end, score, paraaf = st
                             if st_start <= start and st_end >= end and st_chrom == chrom: 
-                                out = [gene, chrom, start, end, panel, score, paraaf]
+                                out = [gene, chrom, start, end, other_panel, score, paraaf]
                         row6, col6 = write_list(out, ws6, row=row6, col=0,
                                                 orientation='cols')
 
@@ -248,6 +250,15 @@ rule samplereport:
 
                 ws2.set_column('A:A', 26)
                 row2, col2 = write_list(sangers, ws2, row=row2-1, col=0,
+                                        orientation='cols')
+
+                row2, col2 = write_list([' ', 'Paraaf staf voor gezien: '],
+                                        ws2, row=row2, col=0)
+
+            if not sangers_for_other_panels:
+                sangers = ['Geen sangers:']
+                ws6.set_column('A:A', 26)
+                row6, col6 = write_list(sangers, ws6, row=row6-1, col=0,
                                         orientation='cols')
 
 
