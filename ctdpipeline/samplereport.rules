@@ -183,8 +183,8 @@ rule samplereport:
                                 header='NON-CALLABLE SANGER FRAGMENTEN',
                                 skip=3, orientation='cols', format=underlined)
 
-        row2, col2 = write_list(SANGER + ['Panel'], ws2, formatheader=headerformat,
-                                header='NON-CALLABLE SANGER FRAGMENTEN',
+        row6, col6 = write_list(SANGER + ['Panel'], ws6, formatheader=headerformat,
+                                header='NON-CALLABLE SANGER FRAGMENTEN OVERIGE PANELS',
                                 skip=3, orientation='cols', format=underlined)
 
         sangers = MR.get_sanger_fragments(panel)
