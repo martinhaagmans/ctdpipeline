@@ -59,9 +59,9 @@ if __name__ == '__main__':
         args.pipeline = True
         args.cleanup = True
 
-    BASEDIR = '/data/dnadiag/reads'
-    ARCHIEF = '/mnt/kg_nextgen_archief/IlluminaRawData/'
-    SCRIPTHOME = '/data/dnadiag/ctdpipeline/'
+    BASEDIR = os.path.join('/', 'data', 'dnadiag', 'reads')
+    ARCHIEF = os.path.join('/', 'mnt', 'kg_nextgen_archief', 'IlluminaRawData')
+    SCRIPTHOME = os.path.dirname(os.path.realpath(__file__))
     CONFIG = os.path.join(SCRIPTHOME, 'ctdpipeline', 'config.yaml')
     CONFIG_JSON = os.path.join(SCRIPTHOME, 'ctdpipeline', 'config.json')
     READS = os.path.join(BASEDIR, 'MS{}'.format(serie))
@@ -129,24 +129,21 @@ if __name__ == '__main__':
 
     if args.pipeline:
         samples = [_[0] for _ in samplesheet_to_sample_genesis('{}/SampleSheet.csv'.format(READS)) if not 'amplicon' in _[0].lower()]
-        
+        if not os.path.isdir(os.path.join(READS, 'SNPcheck')):
+            os.mkdir(os.path.join(READS, 'SNPcheck'))
         for sample in samples:
             snpcheckfile = os.path.join(READS, 'SNPcheck', '{}.qpcrsnpcheck'.format(sample))
             if not os.path.isfile(snpcheckfile):
                 run_command('touch {}'.format(snpcheckfile))
         
         run_snakemake = 'snakemake --rerun-incomplete -s {}/ctdpipeline/captures.snakefile -j{} --configfile {} --directory {}'.format(SCRIPTHOME, threads, CONFIG, READS)
-        run_snakemake_amplicons = 'snakemake --rerun-incomplete -s {}/ctdpipeline/amplicons.snakefile -j{} --configfile {} --directory {}'.format(SCRIPTHOME, threads, CONFIG, READS)
         
         if args.unlock:
             run_snakemake = f'{run_snakemake} --unlock'
-            run_snakemake = f'{run_snakemake_amplicons} --unlock'
         if args.notemp:
             run_snakemake = f'{run_snakemake} --notemp'
-            run_snakemake = f'{run_snakemake_amplicons} --notemp'
 
         run_command(run_snakemake)
-        run_command(run_snakemake_amplicons)
 
     if args.cleanup:
         amplicon_genesiscodes = TargetDatabase(TARGETDB).get_amplicon_genesiscode()
