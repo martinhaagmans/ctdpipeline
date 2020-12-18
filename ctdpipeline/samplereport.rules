@@ -224,11 +224,11 @@ rule samplereport:
                         sangers_for_other_panels = True
                         start = int(start)
                         end = int(end)
-                        out = [gene, chrom, start, end, other_panel]
+                        out = [gene, chrom, start, end, '', '', '', other_panel]
                         for st in standaard_merged:
                             st_chrom, st_start, st_end, score, paraaf = st
                             if st_start <= start and st_end >= end and st_chrom == chrom: 
-                                out = [gene, chrom, start, end, other_panel, score, paraaf]
+                                out = [gene, chrom, start, end, score, paraaf, other_panel]
                         row6, col6 = write_list(out, ws6, row=row6, col=0,
                                                 orientation='cols')
 
@@ -245,7 +245,7 @@ rule samplereport:
                 row2, col2 = write_list(out, ws2, row=row2, col=0,
                                         orientation='cols')
             if not sangers_for_panel:
-                sangers = ['Geen sangers:']
+                sangers = ['Geen sangers.']
                 [sangers.append(' ') for _ in range(len(SANGER))]
 
                 ws2.set_column('A:A', 26)
@@ -256,7 +256,9 @@ rule samplereport:
                                         ws2, row=row2, col=0)
 
             if not sangers_for_other_panels:
-                sangers = ['Geen sangers:']
+                sangers = ['Geen sangers.']
+                [sangers.append(' ') for _ in range(len(SANGER)+1)]
+
                 ws6.set_column('A:A', 26)
                 row6, col6 = write_list(sangers, ws6, row=row6-1, col=0,
                                         orientation='cols')
