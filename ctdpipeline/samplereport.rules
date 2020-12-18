@@ -183,7 +183,11 @@ rule samplereport:
                                 header='NON-CALLABLE SANGER FRAGMENTEN',
                                 skip=3, orientation='cols', format=underlined)
 
-        sangers = MR.get_sanger_fragments(pakket)
+        row2, col2 = write_list(SANGER + ['Panel'], ws2, formatheader=headerformat,
+                                header='NON-CALLABLE SANGER FRAGMENTEN',
+                                skip=3, orientation='cols', format=underlined)
+
+        sangers = MR.get_sanger_fragments(panel)
 
         if os.path.isfile(STANDAARDFRAGMENTEN):
             df_serie = standaardfragmenten_naar_df(STANDAARDFRAGMENTEN)
@@ -208,9 +212,6 @@ rule samplereport:
             row6, col6 = write_list(sangers, ws6, row=row2-1, col=0,
                                     orientation='cols')
 
-            row6, col6 = write_list([' ', 'Paraaf staf voor gezien: '],
-                                    ws6, row=row2, col=0)
-
         else:
             sangers_for_panel = False
             a_genes = input_dict[sample]['agenen']
@@ -221,11 +222,11 @@ rule samplereport:
                     if gene in input_dict[sample]['other_panels'][other_panel]:
                         start = int(start)
                         end = int(end)
-                        out = [gene, chrom, start, end] 
+                        out = [gene, chrom, start, end, panel] 
                         for st in standaard_merged:
                             st_chrom, st_start, st_end, score, paraaf = st
                             if st_start <= start and st_end >= end and st_chrom == chrom: 
-                                out = [gene, chrom, start, end , score, paraaf]
+                                out = [gene, chrom, start, end, panel, score, paraaf]
                         row6, col6 = write_list(out, ws6, row=row6, col=0,
                                                 orientation='cols')
 
