@@ -212,18 +212,6 @@ rule samplereport:
                         row2, col2 = write_list(out, ws2, row=row2, col=0,
                                                 orientation='cols')
 
-
-            if not sangers_for_panel:
-                sangers = ['Geen sangers.']
-                [sangers.append(' ') for _ in range(len(SANGER))]
-
-                ws2.set_column('A:A', 26)
-                row2, col2 = write_list(sangers, ws2, row=row2-1, col=0,
-                                        orientation='cols')
-
-                row2, col2 = write_list([' ', 'Paraaf staf voor gezien: '],
-                                        ws2, row=row2, col=0)
-
         ws3.write(3, 11, 'Paraaf', underlined)
         ws3.write(4, 10, 'Eerste beoordeling: ')
 
