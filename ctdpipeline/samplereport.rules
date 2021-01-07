@@ -263,14 +263,10 @@ rule samplereport:
 
             ws4.set_column('A:A', 25)
             ws4.set_column('B:F', 10)
-            ws4.set_column('G:G', 6)
+            ws4.set_column('G:G', 8)
             ws4.set_column('H:I', 22)
             ws4.set_column('J:J', 19)
             ws4.set_column('K:K', 9)
-
-            ws4.set_column('A:A', 25)
-            ws4.set_column('G:G', 18)
-            ws4.set_column('I:I', 18)
 
             cnv_calls = 'output/CNV_{}/Calls/{}.txt'.format(capture, sample)
             cnv_archive = 'output/CNV_{}/archive.txt'.format(capture)
@@ -329,7 +325,7 @@ rule samplereport:
                                                             format=underlined)
                                     header_printed = True
                                 row4, col4 = write_list(line.split(), ws4, row=row4, orientation='cols', format=black)
-                                row4, col4 = write_list([other_panel], ws4, row=row4-1, col=col4, orientation='cols')
+                                row4, col4 = write_list([other_panel], ws4, row=row4-1, col=col4-2, orientation='cols')
 
 
                 if not header_printed:
