@@ -263,9 +263,8 @@ rule samplereport:
 
             ws4.set_column('A:A', 25)
             ws4.set_column('B:F', 10)
-            ws4.set_column('G:G', 11)
-            ws4.set_column('H:H', 22)
-            ws4.set_column('I:I', 4)
+            ws4.set_column('G:G', 6)
+            ws4.set_column('H:I', 22)
             ws4.set_column('J:J', 19)
             ws4.set_column('K:K', 9)
 
@@ -304,9 +303,9 @@ rule samplereport:
                     header = next(f)
                     header = list(header.split())
                     header.insert(0, 'Regio')
+                    header.append('Panel')
                     header.append('Opmerking')
                     header.append('Paraaf NGS-connaisseur')
-                    header.append('Panel')
                     header_printed = False
                     for line in f:
                         target, z_score, gene, *_ = line.split()
@@ -316,7 +315,7 @@ rule samplereport:
                                                         header='CNV calls', orientation='cols',
                                                         format=underlined)
                                 header_printed = True
-                            out = line.split() + ['', '', panel]
+                            out = line.split() + [panel]
                             row4, col4 = write_list(out, ws4, row=row4, orientation='cols')
 
                         for other_panel in other_panels:
@@ -329,8 +328,8 @@ rule samplereport:
                                                             header='CNV calls', orientation='cols',
                                                             format=underlined)
                                     header_printed = True
-                                out = line.split() + ['', '', other_panel]
-                                row4, col4 = write_list(out, ws4, row=row4, orientation='cols', format=black)
+                                row4, col4 = write_list(line.split(), ws4, row=row4, orientation='cols', format=black)
+                                row4, col4 = write_list([other_panel], ws4, row=row4-1, col=col4, orientation='cols')
 
 
                 if not header_printed:
