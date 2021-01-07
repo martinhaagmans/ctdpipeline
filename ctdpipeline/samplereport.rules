@@ -52,6 +52,8 @@ rule samplereport:
             pakket = input_dict[sample]['pakket']
         
         panel = input_dict[sample]['panel']
+        other_panels = input_dict[sample]['other_panels_agenes'].keys()
+
         oid = input_dict[sample]['oid']
 
         sex = input_dict[sample]['geslacht']
@@ -203,8 +205,8 @@ rule samplereport:
                     out = [gene, chrom, start, end, '', '', '', panel]
                     row2, col2 = write_list(out, ws2, row=row2, col=0,
                                             orientation='cols')
-                for other_panel in input_dict[sample]['other_panels'].keys():
-                    if gene in input_dict[sample]['other_panels'][other_panel]:
+                for other_panel in other_panels:
+                    if gene in input_dict[sample]['other_panels_agenes'][other_panel]:
                         sangers_for_other_panels = True
                         start = int(start)
                         end = int(end)
@@ -301,6 +303,7 @@ rule samplereport:
                     header.insert(0, 'Regio')
                     header.append('Opmerking')
                     header.append('Paraaf NGS-connaisseur')
+                    header.append('Panel')
                     header_printed = False
                     for line in f:
                         target, z_score, gene, *_ = line.split()
@@ -310,8 +313,23 @@ rule samplereport:
                                                         header='CNV calls', orientation='cols',
                                                         format=underlined)
                                 header_printed = True
+                            out = line.split() + ['', '', panel]
+                            row4, col4 = write_list(out, ws4, row=row4, orientation='cols')
 
-                            row4, col4 = write_list(line.split(), ws4, row=row4, orientation='cols')
+                        for other_panel in other_panels:
+                            other_agenes = input_dict[sample]['other_panels_agenes'][other_panel]
+                            other_cgenes = input_dict[sample]['other_panels_cgenes'][other_panel]
+                            other_genes = other_agenes + other_cgenes
+                            if gene in other_genes:
+                                if not header_printed:
+                                    row4, col4 = write_list(header, ws4, formatheader=headerformat,
+                                                            header='CNV calls', orientation='cols',
+                                                            format=underlined)
+                                    header_printed = True
+                                out = line.split() + ['', '', other_panel]
+                                row4, col4 = write_list(out, ws4, row=row4, orientation='cols')
+
+
                 if not header_printed:
                     row4, col4 = write_list(['Geen calls', '',
                                             'Paraaf NGS-connaisseur voor gezien: ',
