@@ -81,34 +81,6 @@ rule seriereport:
                                     + [perctargetcovered],
                                     ws1, row=row1, orientation='cols')
 
-        df, failed = parse_sangers_for_seriereport(serie, db)
-
-        if df.empty:
-            ws2 = wb.add_worksheet('Sangers')
-            row2, col2 = write_list(['Geen sangers'], ws2, orientation='cols')
-
-        else:
-            df = df.reset_index()
-            df.drop(['target_start', 'target_end'], inplace=True, axis=1)
-            gene_column = df['gen']
-            df.drop(labels=['gen'], axis=1, inplace=True)
-            df.insert(0, 'gen', gene_column)
-
-            df.to_excel(writer, 'Sangers', header=False, index=False,
-                        startrow=1, startcol=0)
-
-            ws2 = writer.sheets['Sangers']
-            ws2.set_column('F:Z', 20)
-            row2, col2 = write_list(['gen', 'chrom', 'min', 'max', 'size', 'patients'], 
-                                    ws2, row=0, orientation='cols', format=underlined)
-
-        row1 += 2
-
-        if failed:
-            ws1.write(row1, 0,
-                      'De volgende patiënten hebben >50 sangers: {}'.format(' '.join(failed)))
-            row1 += 1
-
         snpcheck_serie = get_snpcheck_serie(serie, db)
         duplicate_check = compare_snpchecks_serie(snpcheck_serie)
         duplicate_snpcheck_samples = list()

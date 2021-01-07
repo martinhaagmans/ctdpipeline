@@ -79,6 +79,9 @@ rule samplereport:
         gray = wb.add_format()
         gray.set_bg_color('gray')
 
+        black = wb.add_format()
+        black.set_bg_color('black')
+
         ws1.set_column('A:A', 35)
 
         ws2.set_column('A:A', 25)
@@ -327,7 +330,7 @@ rule samplereport:
                                                             format=underlined)
                                     header_printed = True
                                 out = line.split() + ['', '', other_panel]
-                                row4, col4 = write_list(out, ws4, row=row4, orientation='cols')
+                                row4, col4 = write_list(out, ws4, row=row4, orientation='cols', format=black)
 
 
                 if not header_printed:
