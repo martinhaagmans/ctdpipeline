@@ -89,6 +89,8 @@ rule seriereport:
             if len(sample) > 1:
                 duplicate_snpcheck_samples.append(tuple(_ for _ in sample))
 
+        row1 += 1
+        
         if not duplicate_snpcheck_samples :
             ws1.write(row1, 0, 'Alle NGS-SNPchecks zijn uniek')
             row1 += 1
