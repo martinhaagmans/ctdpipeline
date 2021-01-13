@@ -59,6 +59,7 @@ rule samplereport:
         sex = input_dict[sample]['geslacht']
         ff = input_dict[sample]['FFnummer']
         dob = input_dict[sample]['geboortedatum']
+        deadline = input_dict[sample]['deadline']
 
         db = '{}/metrics.sqlite'.format(config['DB'])
         wb = xlsxwriter.Workbook(output[0])
@@ -98,8 +99,9 @@ rule samplereport:
         ws3.set_column('K:K', 13)
         ws3.set_column('L:L', 25)
 
-        MISEQ = ['NGS DNA nummer:', 'Sanger DNA nummer:', 'Familienummer:',
-                 'Geboortedatum:', 'Geslacht:', 'Diagnose:', 'Samenvatting:']
+        MISEQ = ['NGS DNA nummer:', 'Sanger DNA nummer:', 'Aanvraagnummer:',
+                 'Geboortedatum:', 'Geslacht:', 'Deadline:', 'Diagnose:', 
+                 'Samenvatting:']
 
         SEQRAP = ['Reads:', '% chimeric reads:',
                   'Gemiddelde lengte gemapte forward:',
@@ -145,6 +147,7 @@ rule samplereport:
         ws1.write(3, 1, ff)
         ws1.write(4, 1, dob, num_format)
         ws1.write(5, 1, sex)
+        ws1.write(6, 1, deadline, num_format)
         samenvatting = '''=B4&"("&B2&" + "&B3&"; " &B5&", "&B6&", "&B7&")"'''
         ws1.write(len(MISEQ), 1, samenvatting)
 

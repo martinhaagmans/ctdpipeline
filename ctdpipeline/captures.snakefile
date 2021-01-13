@@ -62,8 +62,20 @@ for fn in [TARGETDB, SNPCHECK, METRICSDB, SAMPLEDB, PATIENTDB, SAMPLESHEET]:
     assert os.path.isfile(fn), '{} bestaat niet'.format(fn)
 
 def add_patient_info(todo, serie, db):
+    conn = sqlite3.connect(db)
+    c = conn.cursor()
+
     for sample in todo.keys():
-        sex, ff, dob = get_patient_info(sample, serie, db)
+        sql = """SELECT SEX, FF, DOB, DEADLINE 
+        FROM patientinfo
+        WHERE (SAMPLE='{}' AND SERIE='{}')
+        """.format(sample, serie)
+        c.execute(sql)
+        try:
+            sex, ff, dob, deadline = c.fetchone()
+        except TypeError:
+            sex, ff, dob, deadline = (str(), str(), str(), str())
+
         if sex == 'M':
             sex = 'Man'
         elif sex == 'V':
@@ -71,6 +83,7 @@ def add_patient_info(todo, serie, db):
         todo[sample]['geslacht'] = sex
         todo[sample]['FFnummer'] = ff
         todo[sample]['geboortedatum'] = dob
+        todo[sample]['deadline'] = deadline
     return todo
 
 def create_recalinput_file(samples):
