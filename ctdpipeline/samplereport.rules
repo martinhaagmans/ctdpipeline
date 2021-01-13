@@ -148,7 +148,7 @@ rule samplereport:
         ws1.write(4, 1, dob, num_format)
         ws1.write(5, 1, sex)
         ws1.write(6, 1, deadline, num_format)
-        samenvatting = '''=B4&"("&B2&" + "&B3&"; " &B5&", "&B6&", "&B7&")"'''
+        samenvatting = '''=B4&"("&B2&" + "&B3&"; " &B5&", "&B6&", "&B8&")"'''
         ws1.write(len(MISEQ), 1, samenvatting)
 
         row1, col1 = write_list(MISEQ, ws1, header='MISEQUENCING',
