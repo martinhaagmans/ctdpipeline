@@ -62,8 +62,20 @@ for fn in [TARGETDB, SNPCHECK, METRICSDB, SAMPLEDB, PATIENTDB, SAMPLESHEET]:
     assert os.path.isfile(fn), '{} bestaat niet'.format(fn)
 
 def add_patient_info(todo, serie, db):
+    conn = sqlite3.connect(db)
+    c = conn.cursor()
+
     for sample in todo.keys():
-        sex, ff, dob = get_patient_info(sample, serie, db)
+        sql = """SELECT SEX, FF, DOB, DEADLINE 
+        FROM patientinfo
+        WHERE (SAMPLE='{}' AND SERIE='{}')
+        """.format(sample, serie)
+        c.execute(sql)
+        try:
+            sex, ff, dob, deadline = c.fetchone()
+        except TypeError:
+            sex, ff, dob, deadline = (str(), str(), str(), str())
+
         if sex == 'M':
             sex = 'Man'
         elif sex == 'V':
@@ -71,6 +83,7 @@ def add_patient_info(todo, serie, db):
         todo[sample]['geslacht'] = sex
         todo[sample]['FFnummer'] = ff
         todo[sample]['geboortedatum'] = dob
+        todo[sample]['deadline'] = deadline
     return todo
 
 def create_recalinput_file(samples):
@@ -111,7 +124,8 @@ def get_other_agenes(todo, db):
     conn = sqlite3.connect(db)
     c = conn.cursor()
     for sample in todo.keys():
-        todo[sample]['other_panels'] = dict()
+        todo[sample]['other_panels_agenes'] = dict()
+        todo[sample]['other_panels_cgenes'] = dict()
         panel, versie = todo[sample]['panel'].split('typeAv')
         sql = """SELECT panel FROM genesis 
         WHERE (capture='CTD' AND panel!='OVR' AND panel!="{}")
@@ -129,9 +143,24 @@ def get_other_agenes(todo, db):
             WHERE (panel='{}' AND versie={})
             """.format(other_panel, int(versie))
             c.execute(sql)
-            genes = c.fetchone()[0]
-            genes = json.loads(genes)
-            todo[sample]['other_panels'][other_panel] = genes
+            a_genes = c.fetchone()[0]
+            a_genes = json.loads(a_genes)
+            todo[sample]['other_panels_agenes'][other_panel] = a_genes
+
+            sql = """SELECT MAX(versie) 
+            FROM panels_cgenen WHERE panel='{}'
+            """.format(other_panel)
+            c.execute(sql)
+            max_version = c.fetchone()[0]
+            sql = """SELECT genen
+            FROM panels_cgenen 
+            WHERE (panel='{}' AND versie={})
+            """.format(other_panel, int(versie))
+            c.execute(sql)
+            c_genes = c.fetchone()[0]
+            c_genes = json.loads(c_genes)
+            todo[sample]['other_panels_cgenes'][other_panel] = c_genes
+
     conn.close()
     return todo
 

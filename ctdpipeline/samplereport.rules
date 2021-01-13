@@ -52,11 +52,14 @@ rule samplereport:
             pakket = input_dict[sample]['pakket']
         
         panel = input_dict[sample]['panel']
+        other_panels = input_dict[sample]['other_panels_agenes'].keys()
+
         oid = input_dict[sample]['oid']
 
         sex = input_dict[sample]['geslacht']
         ff = input_dict[sample]['FFnummer']
         dob = input_dict[sample]['geboortedatum']
+        deadline = input_dict[sample]['deadline']
 
         db = '{}/metrics.sqlite'.format(config['DB'])
         wb = xlsxwriter.Workbook(output[0])
@@ -68,7 +71,6 @@ rule samplereport:
         ws1 = wb.add_worksheet('patient + Miseq info')
         ws2 = wb.add_worksheet('low coverage')
         ws3 = wb.add_worksheet('varianten')
-        ws6 = wb.add_worksheet('low coverage overig')
         
         num_format = wb.add_format({'num_format': '@'})
         headerformat = wb.add_format()
@@ -77,6 +79,9 @@ rule samplereport:
         underlined.set_bottom()
         gray = wb.add_format()
         gray.set_bg_color('gray')
+
+        black = wb.add_format()
+        black.set_bg_color('black')
 
         ws1.set_column('A:A', 35)
 
@@ -94,11 +99,9 @@ rule samplereport:
         ws3.set_column('K:K', 13)
         ws3.set_column('L:L', 25)
 
-        ws6.set_column('A:A', 25)
-        ws6.set_column('F:H', 13)
-
-        MISEQ = ['NGS DNA nummer:', 'Sanger DNA nummer:', 'Familienummer:',
-                 'Geboortedatum:', 'Geslacht:', 'Diagnose:', 'Samenvatting:']
+        MISEQ = ['NGS DNA nummer:', 'Sanger DNA nummer:', 'Aanvraagnummer:',
+                 'Geboortedatum:', 'Geslacht:', 'Deadline:', 'Diagnose:', 
+                 'Samenvatting:']
 
         SEQRAP = ['Reads:', '% chimeric reads:',
                   'Gemiddelde lengte gemapte forward:',
@@ -144,7 +147,8 @@ rule samplereport:
         ws1.write(3, 1, ff)
         ws1.write(4, 1, dob, num_format)
         ws1.write(5, 1, sex)
-        samenvatting = '''=B4&"("&B2&" + "&B3&"; " &B5&", "&B6&", "&B7&")"'''
+        ws1.write(6, 1, deadline, num_format)
+        samenvatting = '''=B4&"("&B2&" + "&B3&"; " &B5&", "&B6&", "&B8&")"'''
         ws1.write(len(MISEQ), 1, samenvatting)
 
         row1, col1 = write_list(MISEQ, ws1, header='MISEQUENCING',
@@ -179,25 +183,12 @@ rule samplereport:
 
         row1, col1 = write_list(INFODATA, ws1, row=row1 - len(INFO) - 2, col=1)
 
-        row2, col2 = write_list(SANGER, ws2, formatheader=headerformat,
+        row2, col2 = write_list(SANGER + ['Panel'], ws2, formatheader=headerformat,
                                 header='NON-CALLABLE SANGER FRAGMENTEN',
-                                skip=3, orientation='cols', format=underlined)
-
-        row6, col6 = write_list(SANGER + ['Panel'], ws6, formatheader=headerformat,
-                                header='NON-CALLABLE SANGER FRAGMENTEN OVERIGE PANELS',
                                 skip=3, orientation='cols', format=underlined)
 
         sangers = MR.get_sanger_fragments(panel)
 
-        if os.path.isfile(STANDAARDFRAGMENTEN):
-            df_serie = standaardfragmenten_naar_df(STANDAARDFRAGMENTEN)
-            standaard = standaardfragmenten_dict_sample(sample, df_serie)
-            fragmentlist = get_fragment_list(standaard)
-            standaard_merged = merge_standaardfrags(fragmentlist)
-
-        else:
-            standaard_merged = dict()
-        
         if 'Geen sangers:' in sangers:
             sangers = [sangers]
             [sangers.append(' ') for _ in range(len(SANGER))]
@@ -209,60 +200,25 @@ rule samplereport:
             row2, col2 = write_list([' ', 'Paraaf staf voor gezien: '],
                                     ws2, row=row2, col=0)
 
-            row6, col6 = write_list(sangers, ws6, row=row2-1, col=0,
-                                    orientation='cols')
-
         else:
-            sangers_for_panel = False
-            sangers_for_other_panels = False
             a_genes = input_dict[sample]['agenen']
             for line in sangers:
                 gene, chrom, start, end, *_ = line
-
-                for other_panel in input_dict[sample]['other_panels'].keys():
-                    if gene in input_dict[sample]['other_panels'][other_panel]:
+                
+                if gene in a_genes:
+                    start = int(start)
+                    end = int(end)
+                    out = [gene, chrom, start, end, '', '', '', panel]
+                    row2, col2 = write_list(out, ws2, row=row2, col=0,
+                                            orientation='cols')
+                for other_panel in other_panels:
+                    if gene in input_dict[sample]['other_panels_agenes'][other_panel]:
                         sangers_for_other_panels = True
                         start = int(start)
                         end = int(end)
                         out = [gene, chrom, start, end, '', '', '', other_panel]
-                        for st in standaard_merged:
-                            st_chrom, st_start, st_end, score, paraaf = st
-                            if st_start <= start and st_end >= end and st_chrom == chrom: 
-                                out = [gene, chrom, start, end, score, paraaf, other_panel]
-                        row6, col6 = write_list(out, ws6, row=row6, col=0,
+                        row2, col2 = write_list(out, ws2, row=row2, col=0,
                                                 orientation='cols')
-
-                if not gene in a_genes:
-                    continue
-                sangers_for_panel = True
-                start = int(start)
-                end = int(end)
-                out = [gene, chrom, start, end] 
-                for st in standaard_merged:
-                    st_chrom, st_start, st_end, score, paraaf = st
-                    if st_start <= start and st_end >= end and st_chrom == chrom: 
-                        out = [gene, chrom, start, end , score, paraaf]
-                row2, col2 = write_list(out, ws2, row=row2, col=0,
-                                        orientation='cols')
-            if not sangers_for_panel:
-                sangers = ['Geen sangers.']
-                [sangers.append(' ') for _ in range(len(SANGER))]
-
-                ws2.set_column('A:A', 26)
-                row2, col2 = write_list(sangers, ws2, row=row2-1, col=0,
-                                        orientation='cols')
-
-                row2, col2 = write_list([' ', 'Paraaf staf voor gezien: '],
-                                        ws2, row=row2, col=0)
-
-            if not sangers_for_other_panels:
-                sangers = ['Geen sangers.']
-                [sangers.append(' ') for _ in range(len(SANGER)+1)]
-
-                ws6.set_column('A:A', 26)
-                row6, col6 = write_list(sangers, ws6, row=row6-1, col=0,
-                                        orientation='cols')
-
 
         ws3.write(3, 11, 'Paraaf', underlined)
         ws3.write(4, 10, 'Eerste beoordeling: ')
@@ -310,15 +266,10 @@ rule samplereport:
 
             ws4.set_column('A:A', 25)
             ws4.set_column('B:F', 10)
-            ws4.set_column('G:G', 11)
-            ws4.set_column('H:H', 22)
-            ws4.set_column('I:I', 4)
+            ws4.set_column('G:G', 8)
+            ws4.set_column('H:I', 22)
             ws4.set_column('J:J', 19)
             ws4.set_column('K:K', 9)
-
-            ws4.set_column('A:A', 25)
-            ws4.set_column('G:G', 18)
-            ws4.set_column('I:I', 18)
 
             cnv_calls = 'output/CNV_{}/Calls/{}.txt'.format(capture, sample)
             cnv_archive = 'output/CNV_{}/archive.txt'.format(capture)
@@ -351,6 +302,7 @@ rule samplereport:
                     header = next(f)
                     header = list(header.split())
                     header.insert(0, 'Regio')
+                    header.append('Panel')
                     header.append('Opmerking')
                     header.append('Paraaf NGS-connaisseur')
                     header_printed = False
@@ -362,8 +314,23 @@ rule samplereport:
                                                         header='CNV calls', orientation='cols',
                                                         format=underlined)
                                 header_printed = True
+                            out = line.split() + [panel]
+                            row4, col4 = write_list(out, ws4, row=row4, orientation='cols')
 
-                            row4, col4 = write_list(line.split(), ws4, row=row4, orientation='cols')
+                        for other_panel in other_panels:
+                            other_agenes = input_dict[sample]['other_panels_agenes'][other_panel]
+                            other_cgenes = input_dict[sample]['other_panels_cgenes'][other_panel]
+                            other_genes = other_agenes + other_cgenes
+                            if gene in other_genes:
+                                if not header_printed:
+                                    row4, col4 = write_list(header, ws4, formatheader=headerformat,
+                                                            header='CNV calls', orientation='cols',
+                                                            format=underlined)
+                                    header_printed = True
+                                row4, col4 = write_list(line.split(), ws4, row=row4, orientation='cols', format=black)
+                                row4, col4 = write_list([other_panel], ws4, row=row4-1, col=col4-2, orientation='cols')
+
+
                 if not header_printed:
                     row4, col4 = write_list(['Geen calls', '',
                                             'Paraaf NGS-connaisseur voor gezien: ',
