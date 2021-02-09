@@ -195,7 +195,7 @@ rule all:
         expand("output/{sample}.filtered.vcf", sample=samples),
         expand("output/{sample}.xlsx", sample=samples),
         expand("output/{sample}.DM.bam", sample=samples),
-        "output/input.json",
+        "input.json",
         "output/MS{}_report.xlsx".format(serie),
         "output/MS{}_QC.pdf".format(serie)
 
@@ -220,7 +220,7 @@ rule dump_input_dict:
     input:
         {SAMPLESHEET}
     output:
-        "output/input.json"
+        "input.json"
     run:
         with open("{}".format(output), 'w') as fp:
             json.dump(input_dict, fp, indent=4)

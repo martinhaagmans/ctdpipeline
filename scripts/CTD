@@ -5,20 +5,11 @@ if __name__ == '__main__':
     import os
     import glob
     import json
-    import shutil
-    import sqlite3
     import argparse
-    import subprocess
 
     from ngsscriptlibrary import samplesheet_to_sample_genesis
-    from ngsscriptlibrary import parse_samplesheet_for_pipeline
-    from ngsscriptlibrary import get_captures
-    from ngsscriptlibrary import TargetDatabase
     from ngsscriptlibrary import run_command
-    from ngsscriptlibrary import create_dir
-    from ngsscriptlibrary import create_empty_excelfile
     from ngsscriptlibrary import read_config_json
-    from ngsscriptlibrary import move_data_to_diagnostic_tree
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-s", "--serie", type=str, 
@@ -33,12 +24,6 @@ if __name__ == '__main__':
                         help="Download reads from basespace")
     parser.add_argument("--cleanup", action='store_true',
                         help="Move data to archive")
-    parser.add_argument("--hester", action='store_true',
-                        help="Run is rehybed @ MiSeq")
-    parser.add_argument("--demultiplex", nargs='?', default=False, const='2', 
-                        type=str, help="Run is re-analyzed @ BaseSpace")
-    parser.add_argument("--niek", action='store_true',
-                        help="Remove serie from databases")
     parser.add_argument("--unlock", action='store_true',
                         help="Unlock snakemake")
     parser.add_argument("--notemp", action='store_true',
@@ -48,11 +33,6 @@ if __name__ == '__main__':
 
     serie = args.serie
     threads = args.threads
-    basespace_serie = serie
-    project = args.demultiplex
-
-    if args.hester:
-        basespace_serie = r'{}\ \(2\)'.format(serie)
 
     if not args.download and not args.pipeline and not args.cleanup:
         args.download = True
@@ -60,83 +40,48 @@ if __name__ == '__main__':
         args.cleanup = True
 
     BASEDIR = os.path.join('/', 'data', 'dnadiag', 'reads')
-    ARCHIEF = os.path.join('/', 'mnt', 'kg_nextgen_archief', 'IlluminaRawData')
+    ADDINFO = os.path.join('/', 'data', 'dnadiag', 'ngsdump', 'ctd_sample_info_parser.py')
+    ARCHIEF = os.path.join('/', 'mnt', 'kg_nextgen_archief', 'CTD_output')
     SCRIPTHOME = os.path.join('/', 'data', 'dnadiag', 'ctdpipeline')
     CONFIG = os.path.join(SCRIPTHOME, 'ctdpipeline', 'config.yaml')
     CONFIG_JSON = os.path.join(SCRIPTHOME, 'ctdpipeline', 'config.json')
-    READS = os.path.join(BASEDIR, 'MS{}'.format(serie))
-    BASEMOUNT = os.path.join(BASEDIR, 'basespace')
-    SERIEDIR = os.path.join('/', 'mnt', 'ngs', 'Analyse*MiSEQ', 'MiSeq*Serie*{}*'.format(serie))
-    SNPCHECKDIR = os.path.join(SERIEDIR, 'SNPcheck')
-    STANDARDFRAGS = os.path.join(SERIEDIR, 'Miseq*{}*std*fragmenten2.xlsx'.format(serie))
     
+    READS = os.path.join('/', 'mnt', 'VUMC', 'VUMC', 'Incoming', 'Spoed', 'CTD', '{}'.format(serie))
+    SAMPLEINFO = glob.glob('{}/*verzicht*.csv'.format(READS))[0]
+    SERIEDIR = os.path.join(BASEDIR, '{}'.format(serie))
+    OUTPUTDIR = os.path.join('/', 'mnt', 'VUMC', 'VUMC', 'Outgoing', '{}'.format(serie))
+
     config_dict = read_config_json(CONFIG_JSON)
     TARGETDB = os.path.join(config_dict["TARGET"], 'varia', 'captures.sqlite') 
-
-
-    #Test SERIEDIR for B series:
-    test_dirs = glob.glob(SERIEDIR)
-    if len(test_dirs) > 1:
-        for test_dir in test_dirs:
-            test = test_dir.split('/')[-1]
-            if '_' in test:
-                test = test.split('_')[0]
-            if test.endswith(str(serie)):
-                SERIEDIR = test_dir.replace(' ', '*')
     
     if args.samplesheet:
         SAMPLESHEET = args.samplesheet
     else:
-        SAMPLESHEET = os.path.join(BASEMOUNT, 'Runs', basespace_serie, 'Files', 'SampleSheet.csv')
-
-    for _ in glob.iglob('{}/*'.format(SERIEDIR)):
-        if _.endswith('Data-analyse'):
-            OUTPUTDIR = _
+        SAMPLESHEET = os.path.join(READS, 'SampleSheet.csv')
 
     if args.download:
         
-        os.mkdir(READS)
+        os.mkdir(SERIEDIR)
 
-        try:
-            glob.glob(STANDARDFRAGS)[0]
-        except IndexError:
-            pass
-        else:
-            run_command('cp {} {}/standaardfragmenten.xlsx'.format(STANDARDFRAGS, READS))
+        #run_command('cp -r {}/SNPcheck {}'.format(READS))
 
-        run_command('cp -r {} {}'.format(SNPCHECKDIR, READS))
-
-        run_command('basemount {} -c ormook'.format(BASEMOUNT))
-
-        if project:
-            run_command(r'cp -r {}/basespace/Projects/{}/Samples/*\({}\)/Files/*.gz {}'.format(BASEDIR, serie, project, READS))
-        else:
-            run_command('cp -r {}/basespace/Projects/{}/Samples/*/Files/*.gz {}'.format(BASEDIR, serie, READS))
-        run_command('cp {} {}/SampleSheet.csv'.format(SAMPLESHEET, READS))
-
-
-        try:
-            os.mkdir('{}/MiSeqRunMetrics/{}'.format(ARCHIEF, serie))
-        except FileExistsError as e:
-            pass
-        else:
-            run_command('cp {}/Runs/{}/Files/*.txt {}/MiSeqRunMetrics/{}'.format(BASEMOUNT, basespace_serie, ARCHIEF, serie))
-            run_command('cp {}/Runs/{}/Files/*.xml {}/MiSeqRunMetrics/{}'.format(BASEMOUNT, basespace_serie, ARCHIEF, serie))
-            run_command('cp -r {}/Runs/{}/Files/InterOp {}/MiSeqRunMetrics/{}'.format(BASEMOUNT, basespace_serie, ARCHIEF, serie))
-            run_command('cp {} {}/MiSeqRunMetrics/{}'.format(SAMPLESHEET, ARCHIEF, serie))
-
-        run_command('basemount --unmount {}'.format(BASEMOUNT))
+        run_command('cp -r {}/*.gz {}'.format(READS, SERIEDIR))
+        run_command('cp {} {}/SampleSheet.csv'.format(SAMPLESHEET, SERIEDIR))
+        run_command('cp {} {}/SampleInfo.csv'.format(SAMPLEINFO, SERIEDIR))
 
     if args.pipeline:
-        samples = [_[0] for _ in samplesheet_to_sample_genesis('{}/SampleSheet.csv'.format(READS)) if not 'amplicon' in _[0].lower()]
-        if not os.path.isdir(os.path.join(READS, 'SNPcheck')):
-            os.mkdir(os.path.join(READS, 'SNPcheck'))
+
+        run_command('python3 {} --input {}/SampleInfo.csv'.format(ADDINFO, SERIEDIR))
+        samples = [_[0] for _ in samplesheet_to_sample_genesis('{}/SampleSheet.csv'.format(SERIEDIR))]
+        if not os.path.isdir(os.path.join(SERIEDIR, 'SNPcheck')):
+            os.mkdir(os.path.join(SERIEDIR, 'SNPcheck'))
         for sample in samples:
-            snpcheckfile = os.path.join(READS, 'SNPcheck', '{}.qpcrsnpcheck'.format(sample))
+            snpcheckfile = os.path.join(SERIEDIR, 'SNPcheck', '{}.qpcrsnpcheck'.format(sample))
             if not os.path.isfile(snpcheckfile):
                 run_command('touch {}'.format(snpcheckfile))
         
-        run_snakemake = 'snakemake --rerun-incomplete -s {}/ctdpipeline/captures.snakefile -j{} --configfile {} --directory {}'.format(SCRIPTHOME, threads, CONFIG, READS)
+        run_snakemake = 'snakemake --rerun-incomplete -s {}/ctdpipeline/captures.snakefile -j{} --configfile {} --directory {}'.format(
+            SCRIPTHOME, threads, CONFIG, SERIEDIR )
         
         if args.unlock:
             run_snakemake = f'{run_snakemake} --unlock'
@@ -146,15 +91,20 @@ if __name__ == '__main__':
         run_command(run_snakemake)
 
     if args.cleanup:
-        amplicon_genesiscodes = TargetDatabase(TARGETDB).get_amplicon_genesiscode()
-        samples = samplesheet_to_sample_genesis('{}/SampleSheet.csv'.format(READS))
-        move_data_to_diagnostic_tree(samples, OUTPUTDIR, READS, serie, amplicon_genesiscodes)
         try:
-            os.mkdir('{}/MiSeq/Diagnostiek/MS{}'.format(ARCHIEF, serie))
-        except FileExistsError as e:
-            pass
+            os.mkdir('{}'.format(OUTPUTDIR))
+        except FileExistsError:
+            print('{} bestaat al. Verwijder {} om opnieuw te kopieren.'.format(
+                OUTPUTDIR, OUTPUTDIR))
         else:
-            run_command('cp {}/reads/*.gz {}/MiSeq/Diagnostiek/MS{}'.format(READS, ARCHIEF, serie))
-        finally:
-            run_command('cp {}/output/*.xlsx {}/output/*.pdf {}/output/input.json {}/MiSeq/Diagnostiek/MS{}'.format(READS, READS, READS, ARCHIEF, serie))
+            run_command('cp -r {}/output/* {}'.format(SERIEDIR, OUTPUTDIR))
+
+        try:
+            os.mkdir('{}/{}'.format(ARCHIEF, serie))
+        except FileExistsError:
+            print('{}/{} bestaat al. Verwijder {}/{} om opnieuw te kopieren.'.format(
+                ARCHIEF, serie, ARCHIEF, serie))
+        else:
+            run_command('cp {}/output/*.xlsx {}/output/*.pdf {}/SampleSheet.csv {}/SerieInfo.csv {}/input.json {}/{}'.format(
+                SERIEDIR, SERIEDIR, SERIEDIR, SERIEDIR, SERIEDIR, ARCHIEF, serie))
         run_command("rsync -rlzuvP /data/dnadiag/databases/ /mnt/kg_nextgen_archief/ServerDatabaseArchief/")
