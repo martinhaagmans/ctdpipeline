@@ -201,11 +201,13 @@ rule samplereport:
                                     ws2, row=row2, col=0)
 
         else:
+            sangers_printed = False
             a_genes = input_dict[sample]['agenen']
             for line in sangers:
                 gene, chrom, start, end, *_ = line
                 
                 if gene in a_genes:
+                    sangers_printed = True
                     start = int(start)
                     end = int(end)
                     out = [gene, chrom, start, end, '', '', '', panel]
@@ -213,12 +215,22 @@ rule samplereport:
                                             orientation='cols')
                 for other_panel in other_panels:
                     if gene in input_dict[sample]['other_panels_agenes'][other_panel]:
-                        sangers_for_other_panels = True
+                        sangers_printed = True
                         start = int(start)
                         end = int(end)
                         out = [gene, chrom, start, end, '', '', '', other_panel]
                         row2, col2 = write_list(out, ws2, row=row2, col=0,
                                                 orientation='cols')
+            if not sangers_printed:
+                sangers = ['Geen sangers: alle A-genen callable.']
+                [sangers.append(' ') for _ in range(len(SANGER))]
+
+                ws2.set_column('A:A', 26)
+                row2, col2 = write_list(sangers, ws2, row=row2-1, col=0,
+                                        orientation='cols')
+
+                row2, col2 = write_list([' ', 'Paraaf staf voor gezien: '],
+                                        ws2, row=row2, col=0)
 
         ws3.write(3, 11, 'Paraaf', underlined)
         ws3.write(4, 10, 'Eerste beoordeling: ')
