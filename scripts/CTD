@@ -105,6 +105,6 @@ if __name__ == '__main__':
             print('{}/{} bestaat al. Verwijder {}/{} om opnieuw te kopieren.'.format(
                 ARCHIEF, serie, ARCHIEF, serie))
         else:
-            run_command('cp {}/output/*.xlsx {}/output/*.pdf {}/SampleSheet.csv {}/SampleInfo.csv {}/input.json {}/{}'.format(
-                SERIEDIR, SERIEDIR, SERIEDIR, SERIEDIR, SERIEDIR, ARCHIEF, serie))
+            run_command('cp -r {}/output/CNV_CTD* {}/output/*.xlsx {}/output/*.pdf {}/SampleSheet.csv {}/SampleInfo.csv {}/input.json {}/{}'.format(
+                SERIEDIR, SERIEDIR, SERIEDIR, SERIEDIR, SERIEDIR, SERIEDIR, ARCHIEF, serie))
         run_command("rsync -rlzuvP /data/dnadiag/databases/ /mnt/kg_nextgen_archief/ServerDatabaseArchief/")
